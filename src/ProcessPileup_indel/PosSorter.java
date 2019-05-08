@@ -1,0 +1,104 @@
+import java.util.*;
+import java.io.*;
+
+public class PosSorter implements Comparator<SimplePileupRecord>{
+    
+    private Hashtable<String, Integer> g2num; /* the key is acronym for genome e.g.) ecoli for E. coli MG1655 */
+    private Comparator<SimplePileupRecord> posSorter;
+    
+    public PosSorter(String genomeHeaderFile){
+	g2num = new Hashtable<String, Integer>();
+	loadG2num(genomeHeaderFile);
+    }
+
+    public PosSorter(String[] headerFiles){
+	g2num = new Hashtable<String, Integer>();
+	loadG2num(headerFiles);
+    }
+    
+    public int compare(SimplePileupRecord s1, SimplePileupRecord s2){
+	if(s1 != null && s2 == null)
+            return -1;
+        else if(s1 == null && s2 !=null)
+            return 1;
+        else if(s1 == null && s2 == null)
+            return 0;
+	
+        return this.compare(s1.getContig(), s1.getPos(), s2.getContig(), s2.getPos());
+    }
+    
+    /* 
+     *  returns 
+     * -1 : if pos1 is smaller than pos2
+     *  0 : if eq
+     *  1 : if pos2 is smaller than pos1
+     *
+     */
+    public int compare(String g1, int pos1, String g2, int pos2){
+	if(g1.equals(g2)){
+            if(pos1 < pos2)
+                return -1;
+            else if(pos1 == pos2)
+                return 0;
+            else
+                return 1;
+        }else
+            return compareGenome(g1, g2);
+    }
+    
+    private int compareGenome(String g1, String g2){
+        if(map(g1) < map(g2))
+            return -1;
+        else
+            return 1;
+    }
+
+    public int map(String g){
+        if(this.g2num.get(g) == null){
+            System.out.println("#" + g + "#");
+	}
+        return this.g2num.get(g).intValue();
+    }
+
+    private void loadG2num(String file){
+        BufferedReader br = null;
+        int index = 0;
+        try{
+            br = new BufferedReader(new FileReader(file));
+            String curLine = "";
+            while((curLine=br.readLine())!=null){
+                String[] tokens = curLine.split("\\t");
+                this.g2num.put(tokens[1].substring(tokens[1].indexOf(":")+1), new Integer(index));
+                index++;
+            }
+	    br.close();
+        }catch(IOException ioe){
+            ioe.printStackTrace();
+        }
+	
+
+    }
+
+    private void loadG2num(String[] files){
+	BufferedReader br = null;
+	int index =0;
+	try{
+	    for(int i=0;i<files.length;i++){
+		System.err.println("[PosSorter.loadG2num] READING IN-->" + files[i]);
+		br = new BufferedReader(new FileReader(files[i]));
+		String curLine = "";
+		while((curLine=br.readLine())!=null){
+		    System.err.println("[PosSorter.loadG2num]-->" + curLine);
+		    String[] tokens = curLine.split("\\t");
+		    this.g2num.put(tokens[1].substring(tokens[1].indexOf(":")+1), new Integer(index));
+		    index++;
+		}
+		br.close();
+		br = null;
+	    }
+	}catch(IOException ioe){
+            ioe.printStackTrace();
+        }
+    }
+
+}

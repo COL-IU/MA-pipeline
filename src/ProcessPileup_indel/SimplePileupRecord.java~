@@ -1,0 +1,98 @@
+import java.util.*;
+
+public class SimplePileupRecord{
+    
+    private String contig;
+    private int pos;
+    private char refBase;
+    private ArrayList<String> bases;
+
+    private static int nextId = 0;
+    private int readerid;
+
+    private static String DELIM = " ";
+    
+    public String getContig(){
+	return this.contig;
+    }
+    
+    public int getPos(){
+	return this.pos;
+    }
+    
+    public char getRef(){
+	return this.refBase;
+    }
+    
+    public String getPileupString(){
+	return contig + DELIM + pos + DELIM + refBase + DELIM + this.bases;
+    }
+
+    public ArrayList<String> getBases(){
+	return this.bases;
+    }
+    
+    public int getReaderID(){
+	return this.readerid;
+    }
+
+    public String getHeader(){
+	return this.contig + DELIM + this.pos;
+    }
+
+    public SimplePileupRecord appendToBases(String b){
+	this.bases.add(b);
+	return this;
+    }
+
+    public SimplePileupRecord merge(SimplePileupRecord other){
+	if(this.isSamePileupLocation(other))
+	    appendToBases(other.getBases());
+	return this;
+    }
+
+    public SimplePileupRecord appendToBases(ArrayList<String> basesL){
+	this.bases.addAll(basesL);
+	return this;
+    }
+
+    public StringBuffer toStringBuffer(){
+	StringBuffer buffer = new StringBuffer(this.contig + DELIM + pos + DELIM + refBase);
+	for(int i=0;i<this.bases.size();i++){
+	    buffer.append(DELIM + this.bases.get(i).toString());
+	}
+	return buffer;
+    }
+
+    public boolean isSamePileupLocation(SimplePileupRecord other){
+	if(this.contig.equals(other.getContig()) && this.pos == other.getPos())
+	    return true;
+	return false;
+    }
+
+    public SimplePileupRecord(String contig, int pos, char ref){
+	this.contig = contig;
+	this.pos = pos;
+	this.refBase = ref;
+	this.bases = new ArrayList<String>();
+	this.readerid = nextId;
+	nextId++;
+    }
+
+    public SimplePileupRecord(String[] tokens, int index){
+	this(tokens);
+	this.readerid = index;
+	nextId--;
+    }
+    
+    public SimplePileupRecord(String[] tokens){
+	this(tokens[0],Integer.parseInt(tokens[1]),tokens[2].charAt(0));
+	if(tokens.length == 7) /* This is a special format with dominat indel String column added to the standard pileup format(6 columns)*/
+	    bases.add(tokens[6]); // If it is a special pileup format then take the dominant indel string to bases.
+	else if(tokens.length > 3){
+	    bases.add(tokens[4]);
+	}
+    }
+
+    
+}
